@@ -7,3 +7,15 @@
 //
 
 import Foundation
+
+class Config: NSObject {
+    
+    class var rootURL: NSURL{
+        #if DEBUG
+            return NSURL(string: "")!
+            #else
+            return NSURL(string: "")!
+        #endif
+    }
+    
+}
