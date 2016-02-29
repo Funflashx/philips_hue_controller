@@ -7,17 +7,14 @@
 //
 
 import Foundation
-import Alamofire
 
 class Home: NSObject, NSCoding{
     let identifier:String!
     let firstName:String?
     let lastName:String?
     var email:String?
-    var languages:[String] = []
     
     init?(json:NSDictionary) {
-        self.languages = json.valueForKey("languages") as? [String] ?? []
         self.email = json.valueForKeyPath("email") as? String
         self.identifier = json.valueForKeyPath("_id") as? String
         self.firstName = json.valueForKeyPath("username.first") as? String
@@ -30,7 +27,6 @@ class Home: NSObject, NSCoding{
     
     @objc internal required init?(coder aDecoder: NSCoder) {
         self.email = aDecoder.decodeObjectForKey("email") as? String
-        self.languages = aDecoder.decodeObjectForKey("languages") as? [String] ?? []
         self.identifier = aDecoder.decodeObjectForKey("identifier") as? String
         self.firstName = aDecoder.decodeObjectForKey("firstName") as? String
         self.lastName = aDecoder.decodeObjectForKey("lastName") as? String
@@ -44,7 +40,6 @@ class Home: NSObject, NSCoding{
         if let email = email {
             aCoder.encodeObject(email, forKey:"email")
         }
-        aCoder.encodeObject(languages, forKey:"languages")
         aCoder.encodeObject(identifier, forKey: "identifier")
         if let firstName = firstName {
             aCoder.encodeObject(firstName, forKey: "firstName")
@@ -54,9 +49,6 @@ class Home: NSObject, NSCoding{
         }
     }
     
-    var defaultLanguage:String {
-        return self.languages.first ?? "en"
-    }
     
     var URLString:String {
         return Config.rootURL.URLByAppendingPathComponent(String(format:"home/%@", self.identifier)).absoluteString
@@ -81,5 +73,5 @@ class Home: NSObject, NSCoding{
         }
     }
     
-
+    
 }

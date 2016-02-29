@@ -11,11 +11,7 @@ import Foundation
 class Config: NSObject {
     
     class var rootURL: NSURL{
-        #if DEBUG
-            return NSURL(string: "")!
-            #else
-            return NSURL(string: "")!
-        #endif
+        return NSURL(string: "http://demo2118312.mockable.io/api/")!
     }
     
 }

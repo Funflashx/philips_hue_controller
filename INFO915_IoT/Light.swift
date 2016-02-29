@@ -10,9 +10,12 @@ import Foundation
 import Alamofire
 
 
-class Light: NSObject{
+private let LightCatalogInstance = Light.Catalog(slug:"lights")
+
+final class Light: NSObject, CatalogObject {
     
-    var home: Home!
+    //var home: Home!
+    var identifier: String?
     var uniqueid: String?
     var type: String?
     var modelid: String?
@@ -21,39 +24,42 @@ class Light: NSObject{
     var swversion: String?
     var state: State?
     
-    init?(home:Home) {
-        self.home = home
+    override init(/*home:Home*/) {
+        //self.home = home
         super.init()
     }
     
-    static func instantiate(home: Home, json: NSDictionary) -> Light? {
-        return Light(home:home, json:json)
+    static func instantiate(/*home: Home,*/ json: NSDictionary) -> Light? {
+        return Light(/*home:home,*/ json:json)
     }
     
-    init?(home: Home, json:NSDictionary) {
-        self.uniqueid = json.valueForKeyPath("uniqueid") as? String
-        self.type = json.valueForKeyPath("type") as? String
-        self.modelid = json.valueForKey("modelid") as? String
-        self.name = json.valueForKey("name") as? String
-        self.manufacturername = json.valueForKey("manufacturername") as? String
-        self.swversion = json.valueForKey("swversion") as? String
+    init?(/*home: Home, */json:NSDictionary) {
+        self.identifier = String(json.valueForKeyPath("id") as! Int)
+        self.uniqueid = json.valueForKeyPath("data.uniqueid") as? String
+        self.type = json.valueForKeyPath("data.type") as? String
+        self.modelid = json.valueForKeyPath("data.modelid") as? String
+        self.name = json.valueForKeyPath("data.name") as? String
+        self.manufacturername = json.valueForKeyPath("data.manufacturername") as? String
+        self.swversion = json.valueForKeyPath("data.swversion") as? String
+        
+        
         
         super.init()
         
-        if let stateJson = json.valueForKey("state") as? NSDictionary{
+        if let stateJson = json.valueForKeyPath("data.state") as? NSDictionary{
             if let state = State(light: self, json: stateJson) {
                 self.state = state
             }
         }
-        if self.uniqueid == nil {
+        if self.identifier == nil {
             return nil
         }
     }
     
     
     var URL:NSURL? {
-        if let uniqueid = uniqueid {
-            return home.URL.URLByAppendingPathComponent(String(format:"light/%@", uniqueid))
+        if let uniqueid = identifier {
+            return Config.rootURL.URLByAppendingPathComponent(String(format:"light/%@", uniqueid))
         }
         return nil
     }
@@ -77,21 +83,31 @@ class Light: NSObject{
         }
         return result
     }
-    
-    class func fetchAll(home:Home, completion:(([NSDictionary], NSError?) -> Void)) {
-        
-        Alamofire.request(.GET, home.URL.URLByAppendingPathComponent("light")).validate().responseJSON{response in switch response.result {
-            case .Success(let jsons):
-                if let jsons = jsons as? [NSDictionary] {
-                    completion(jsons, nil)
-                } else {
-                    completion([], NSError(type: .UnexpectedFormat))
+    static func fetchAll(completion:(([NSDictionary], NSError?) -> Void)) {
+        Alamofire.request(.GET, Config.rootURL.URLByAppendingPathComponent("light")).validate()
+            .responseJSON { response in
+                switch response.result {
+                case .Success(let jsons):
+                    if let jsons = jsons as? [NSDictionary] {
+                        completion(jsons, nil)
+                    }
+                default:
+                    print("default")
+                    
                 }
-            case .Failure(let error):
-                    completion([], error as NSError)
-            }
+                
         }
     }
-
+    
+    class var objects:Light.Catalog {
+        return LightCatalogInstance
+    }
+    
+    class Catalog : ObjectCatalog<Light> {
+        override init(slug:String) {
+            super.init(slug:slug)
+        }
+    }
+    
     
 }
